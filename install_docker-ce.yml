@@ -1,0 +1,30 @@
+---
+- hosts: kubernetes
+  remote_user: root
+  tasks:
+    - include: tasks/remove_oldder_version_docker.yml
+    - name: clean repo
+      yum_repository:
+       name: docker-ce
+       state: absent
+      notify: yum-clean-metadata
+    - include: tasks/install_docker-ce_based.yml
+    - name: config repo
+      shell: yum-config-manager --add-repo https://mirrors.ustc.edu.cn/docker-ce/linux/centos/docker-ce.repo
+      notify: yum-makecache
+    - name: install docker-ce
+      yum: 
+        name: docker-ce 
+        state: present
+    - name: config docker repo
+      shell: curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
+    - name: enable & start docker
+      service: 
+        name: docker 
+        enabled: yes 
+        state: started
+  handlers:
+    - name: yum-clean-metadata
+      shell: yum clean metadata
+    - name: yum-makecache
+      shell: yum makecache
